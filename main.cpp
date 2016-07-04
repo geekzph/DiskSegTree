@@ -5,7 +5,7 @@
 //  Created by zph on 16/5/29.
 //  Copyright © 2016年 zph. All rights reserved.
 //
-
+// not using precompoled header files
 
 #include <iostream>
 #include <ostream>
@@ -15,11 +15,9 @@
 #include <time.h>
 #include <stdlib.h>
 #include <malloc.h>
-
-
 using namespace std;
 
-const int kBranchNum = 4;                   //const branch number
+const int kBranchNum = 3;                   //const branch number
 typedef struct Node{                         //Node structure
     int sequence;
     int l;
@@ -37,6 +35,7 @@ typedef struct DiskNode{                         //Node structure
     int branch;
     int maxi,lmaxi,rmaxi,sum;
     int p[kBranchNum+1];
+	//int p;
 } DiskNode;
 
 
@@ -54,7 +53,7 @@ float * ReadDate(char filename[])
     char strline[8];                        //each line's max-character
 	errno_t err;
 	err = fopen_s(&fp, filename, "r");
-	if (err != 0) //判断文件是否存在及可读
+	if (err != 0)                           //open file
 	{
 		printf("error!");
 		return NULL;
@@ -366,13 +365,15 @@ void WriteIndexFile(Node *rootnode)
     if(!file)
         cout << "error! can't create file" << endl;
     
-    DiskNode *disknode =(DiskNode *)malloc(sizeof(DiskNode));
+	DiskNode *disknode = (DiskNode *)malloc(sizeof(DiskNode));;
     vector<Node*> vec;
     vec.push_back(rootnode);
     
     int cur=0;
     int last=1;
     int nodesize = sizeof(Node);
+
+	int test = sizeof(DiskNode);
     Node *p = rootnode;
     while (cur<vec.size())
     {
@@ -381,7 +382,7 @@ void WriteIndexFile(Node *rootnode)
         {
 			p = vec[cur];
             cout<<vec[cur]->l<<"  ";
-            disknode =(DiskNode *)malloc(sizeof(DiskNode));
+            //disknode =(DiskNode *)malloc(sizeof(DiskNode));
             disknode -> l = vec[cur] -> l;
             disknode -> r = vec[cur] -> r;
             disknode -> branch = vec[cur] -> branch;
@@ -395,9 +396,9 @@ void WriteIndexFile(Node *rootnode)
             //Node *disknode = vec[cur];
             //outfile.seekp(sizeof(DiskNode)*cur);
             //file.seekp(sizeof(DiskNode)*cur, ios::beg);
-            file.write((char*)&disknode, sizeof(DiskNode));
+            file.write((char*)disknode, sizeof(DiskNode));
             file.seekp(0, ios::end);
-            free(disknode);
+            //free(disknode);
             for(int i = 1;i <= p->branch; i++)
             {
                 vec.push_back(vec[cur]->s[i]);
@@ -411,14 +412,74 @@ void WriteIndexFile(Node *rootnode)
     file.close();
 }
 
+void ReadNode()
+{
+	fstream file;
+	file.open("test.dat", ios::in | ios::binary);  //open index file
+	DiskNode *s = new DiskNode;
+	//file.seekg(0, ios::beg);
+	file.read((char*)s, sizeof(DiskNode));
+	cout << "zuobaian : " << s -> l << endl;
+	cout << "youbian : " << s -> r << endl;
+	//file.seekg();
+	file.close();
+}
 Node *rootnode = (Node *)malloc(sizeof(Node)); //apply for root node
 int main(int argc, const char * argv[]) {
     float *p;
     p = ReadDate("100.txt");
     printf("total data is %d\n",g_data_num);
-    CreateTree(1, 15, rootnode, p);
+    CreateTree(1, 3, rootnode, p);
+	//=======================test==========================
+
+	//DiskNode *disknode = (DiskNode *)malloc(sizeof(DiskNode));
+	//disknode->l = 1;
+	//disknode->r = 100;
+	//disknode->branch = 10;
+	//disknode->maxi = 20;
+	//disknode->lmaxi = 30;
+	//disknode->rmaxi = 40;
+	//disknode->sum = 50;
+	//disknode->p[1] = 44;
+
+	//fstream file;
+	//file.open("test2.dat", ios::out | ios::trunc | ios::binary);  //create index file
+	//file.write((char*)disknode, sizeof(DiskNode));
+	//
+	//disknode->l = 1;
+	//disknode->r = 10;
+	//disknode->branch = 10;
+	//disknode->maxi = 2;
+	//disknode->lmaxi = 3;
+	//disknode->rmaxi = 4;
+	//disknode->sum = 9;
+	//disknode->p[1] = 0;
+
+	//file.seekp(0, ios::end);
+	//file.write((char*)disknode, sizeof(DiskNode));
+	//file.close();
+
+	//===============================================================
+
+	//fstream file;
+	//file.open("test2.dat", ios::in | ios::binary);  //open index file
+	//DiskNode *s = new DiskNode;
+	//
+	//file.read((char*)s, sizeof(DiskNode));
+	//cout << "zuobaian : " << s->l << endl;
+	//cout << "youbian : " << s->r << endl;
+	//cout << "pointer : " << s->p[1] << endl;
+	//file.seekg(s -> p[1], ios::beg);
+	//file.read((char*)s, sizeof(DiskNode));
+	//cout << "zuobaian : " << s->l << endl;
+	//cout << "youbian : " << s->r << endl;
+	//cout << "pointer : " << s->p[1] << endl;
+	//file.close();
+
+	//=======================test==========================
     LevelTra(rootnode);
     WriteIndexFile(rootnode);
+	ReadNode();
     Node *res = QuerySeg(1, 3, 1, 3, rootnode, 0);
     printf("maxsub sum is :%d\n",res->maxi);
     free(rootnode);
