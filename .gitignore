@@ -1,4 +1,8 @@
 .DS_Store
+*.dat
+*.txt
+Thumbs.db
+#Ignore files build by Visual Studio
 objs/
 libs/
 [Dd]ebug/
@@ -6,11 +10,6 @@ libs/
 *.vcxproj
 *.filters
 *.h
-*.dat
-*.txt
-#ignore thumbnails created by windows
-Thumbs.db
-#Ignore files build by Visual Studio
 *.sdf
 *.opensdf
 *.obj
