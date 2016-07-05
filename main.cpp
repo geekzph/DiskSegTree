@@ -17,9 +17,9 @@
 #include <malloc.h>
 using namespace std;
 
-const int kBranchNum = 10;                   //const branch number
+const int kBranchNum = 5;                       //const branch number
 fstream file;
-typedef struct Node{                         //Node structure
+typedef struct Node{                             //Node structure
     int sequence;
     int l;
     int r;
@@ -30,21 +30,14 @@ typedef struct Node{                         //Node structure
     
 } Node;
 
-typedef struct DiskNode{                         //Node structure
-    int l;
-    int r;
-    int branch;
-    int maxi,lmaxi,rmaxi,sum;
-    int p[kBranchNum+1];
-	//int p;
-} DiskNode;
 
-int g_node_size = sizeof(Node);
-int g_data_num = 0;
-typedef struct Kp{                          //pointer structer
+typedef struct Kp{                              //pointer structer
     struct Node *s[kBranchNum+1];
 } Kp;
 
+Node *rootnode = (Node *)malloc(sizeof(Node)); //apply for root node
+int g_node_size = sizeof(Node);                //teh size of the Node structuer
+int g_data_num = 0;                            //the amount of the dataset
 
 float * ReadDate(char filename[])
 {
@@ -52,29 +45,29 @@ float * ReadDate(char filename[])
     float r[20000];
     FILE *fp;
     double result = 0.0;
-    char strline[8];                        //each line's max-character
+    char strline[8];                            //each line's max-character
 	errno_t err;
 	err = fopen_s(&fp, filename, "r");
-	if (err != 0)                           //open file
+	if (err != 0)                               //open file
 	{
 		printf("error!");
 		return NULL;
 	}
     while (!feof(fp))
     {
-        fgets(strline,12,fp);               //read a line
+        fgets(strline,12,fp);                   //read a line
         result=atof(strline);
         g_data_num++;
         r[g_data_num] =result;
         
         
     }
-    fclose(fp);                             //close file
+    fclose(fp);                                 //close file
     printf("read data file successed\n");
     return r;
 }
 
-//max value
+//return max value
 int max(int a, int b)
 {
     return a>b?a:b;
@@ -165,7 +158,7 @@ void CreateTree(int l ,int r , Node *tp, float x[])
     int rr = r;
     tp->l = l;
     tp->r = r;
-    int seg = (r - l) / kBranchNum;   //segment length
+    int seg = (r - l) / kBranchNum;                   //segment length
     int flag = 0;
     
     if(ll == rr)
@@ -186,9 +179,9 @@ void CreateTree(int l ,int r , Node *tp, float x[])
         }
         else if (ll + seg > r && ll < r + 1)
         {
-            tp->s[i] = (Node *)malloc(sizeof(Node));  //apply for node
-            CreateTree(ll, r,tp->s[i],x);             //create node
-            flag = 1;                                 //quit for
+            tp->s[i] = (Node *)malloc(sizeof(Node));   //apply for node
+            CreateTree(ll, r,tp->s[i],x);              //create node
+            flag = 1;                                  //quit for
         }
         else
         {
@@ -216,11 +209,11 @@ int IntervalNum(int x,Node *p)
 //query segment from aa to bb's maxsub sum
 Node *QuerySeg(int l,int r,int aa,int bb, Node *tp,int num)
 {
-    int flag1 = 0;                        //only one branch
-    int flag2 = 0;                        //if should merge branch
-    if(num != 0) tp = tp -> s[num];       //change pointer
+    int flag1 = 0;                                    //only one branch
+    int flag2 = 0;                                    //if should merge branch
+    if(num != 0) tp = tp -> s[num];                   //change pointer
     Node *ka, *kl, *kr, *res, *res1;
-    Kp *k = (Kp *)malloc(sizeof(Kp));     //multi-branch's pointer
+    Kp *k = (Kp *)malloc(sizeof(Kp));                 //multi-branch's pointer
     res = (Node *)malloc(sizeof(Node));
     ka = (Node *)malloc(sizeof(Node));
     kl = (Node *)malloc(sizeof(Node));
@@ -229,7 +222,7 @@ Node *QuerySeg(int l,int r,int aa,int bb, Node *tp,int num)
         return tp;
     int ll = 0;
     int rr = 0;
-    ll = IntervalNum(aa, tp);             //calculate pointer number
+    ll = IntervalNum(aa, tp);                        //calculate pointer number
     rr = IntervalNum(bb, tp);
     if(ll == rr)
     {
@@ -282,28 +275,28 @@ int IntervalNumInDisk(int x, Node *tp)
 	free(p);
 	return m;
 }
+
+
 //query segment from aa to bb's maxsub sum in disk
-
-
 Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
 {
-	Node *tpl = new Node;              //tpl is the leftmost pointer
-	Node *tpr = new Node;              //tpm is the pointer between tpl and tpr
-	Node *tpm = new Node;              //tpr is the rightmost pointer
+	Node *tpl = new Node;                      //tpl is the leftmost pointer
+	Node *tpr = new Node;                      //tpm is the pointer between tpl and tpr
+	Node *tpm = new Node;                      //tpr is the rightmost pointer
 	Node *tpa = new Node;
-	int flag1 = 0;                        //only one branch
-	int flag2 = 0;                        //if should merge branch
+	int flag1 = 0;                             //only one branch
+	int flag2 = 0;                             //if should merge branch
 	if (num != 0)
 	{
 		cout << tp->p[num] << endl;
-		file.seekg(tp->p[num], ios::beg);     //change pointer
+		file.seekg(tp->p[num], ios::beg);      //change pointer
 		file.read((char*)tpa, g_node_size);
 		cout << tpa->r << endl;
 	}
 	
 	else file.read((char*)tpa, g_node_size);
 	Node *ka, *kl, *kr, *res, *res1;
-	Kp *k = (Kp *)malloc(sizeof(Kp));     //multi-branch's pointer
+	Kp *k = (Kp *)malloc(sizeof(Kp));           //multi-branch's pointer
 	res = (Node *)malloc(sizeof(Node));
 	ka = (Node *)malloc(sizeof(Node));
 	kl = (Node *)malloc(sizeof(Node));
@@ -312,7 +305,7 @@ Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
 		return tpa;
 	int ll = 0;
 	int rr = 0;
-	ll = IntervalNumInDisk(aa, tpa);             //calculate pointer number
+	ll = IntervalNumInDisk(aa, tpa);            //calculate pointer number
 	rr = IntervalNumInDisk(bb, tpa);
 	file.seekg(tpa->p[ll], ios::beg);
 	file.read((char*)tpl, g_node_size);
@@ -329,7 +322,7 @@ Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
 	int i = 1;
 	if (ll < rr)
 	{
-		kl = QuerySegInDisk(tpl->l, tpl->r, aa, tpl->r, tpa, ll);//lefmost point
+		kl = QuerySegInDisk(tpl->l, tpl->r, aa, tpl->r, tpa, ll);   //lefmost point
 		while (ll < rr - 1)
 		{
 			file.seekg(tp->p[ll + 1], ios::beg);
@@ -357,94 +350,8 @@ Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
 	return res;
 }
 
-//merge branch in QuerySeg funcution
-//QuerySeg funtion's merge procedure is different from CreateTree funtion merge procedure
-Node *MergeBranchInQDisk(Node *p, Kp *k, Node *q, int n)
-{
-	Node *res = (Node *)malloc(sizeof(Node));
-	//only two branch to merge
-	if (n == 1)
-	{
-		res->sum = p->sum + q->sum;
-		res->lmaxi = max(p->lmaxi, p->sum + q->lmaxi);
-		res->rmaxi = max(q->rmaxi, q->sum + p->rmaxi);
-		res->maxi = max(p->rmaxi + q->lmaxi, max(p->maxi, q->maxi));
-		return res;
-
-	}
-	else
-	{
-		int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
-		for (int i = 1; i < n; i++)
-		{
-			if (i == 1)
-			{
-				res->sum = p->sum + k->s[1]->sum;
-				res->lmaxi = max(p->lmaxi, p->sum + k->s[1]->lmaxi);
-				res->rmaxi = max(k->s[1]->rmaxi, k->s[1]->sum + p->rmaxi);
-				res->maxi = max(p->rmaxi + k->s[1]->lmaxi, max(p->maxi, k->s[1]->maxi));
-				psum = res->sum, pmaxi = res->maxi, plmaxi = res->lmaxi, prmaxi = res->rmaxi;
-			}
-			else if (i > 1)
-			{
-				res->sum = psum + k->s[i]->sum;
-				res->lmaxi = max(plmaxi, psum + k->s[i]->lmaxi);
-				res->rmaxi = max(k->s[i]->rmaxi, k->s[i]->sum + prmaxi);
-				res->maxi = max(prmaxi + k->s[i]->lmaxi, max(pmaxi, k->s[i]->maxi));
-				psum = res->sum, pmaxi = res->maxi, plmaxi = res->lmaxi, prmaxi = res->rmaxi;
-			}
-
-		}
-		res->sum = psum + q->sum;
-		res->lmaxi = max(plmaxi, psum + q->lmaxi);
-		res->rmaxi = max(q->rmaxi, q->sum + prmaxi);
-		res->maxi = max(prmaxi + q->lmaxi, max(pmaxi, q->maxi));
-		return res;
-	}
-
-}
-
-////level traversal
-//void LevelTra(Node* root)
-//{
-//    if (!root)
-//    {
-//        return;
-//    }
-//    Node *indexnode;
-//    int nodeszie = sizeof(DiskNode);
-//    ofstream outfile("index.dat",ios::out|ios::binary);  //create index file
-//    if(!outfile)
-//        cout << "error! can't create file" << endl;
-//    //outfile.write((char*)indexnode, sizeof(Node)*10);
-//    vector<Node*> vec;
-//    vec.push_back(root);
-//    int cur=0;
-//    int last=1;
-//    Node *p = root;
-//    while (cur<vec.size())
-//    {
-//        last=int(vec.size());
-//        while (cur<last)
-//        {
-//            cout<<vec[cur]->l<<"  ";
-//            outfile.seekp(nodeszie*cur,ios::beg);
-//            char writendoe = vec[cur]->l+vec[cur]->r+vec[cur]->branch+vec[cur]->maxi+vec[cur]->lmaxi+vec[cur]->rmaxi+vec[cur]->sum;
-//            outfile.write((char*)writendoe, sizeof(DiskNode));
-//            outfile.write();
-//            for(int i = 1;i <= p->branch; i++)
-//            {
-//                vec.push_back(vec[cur]->s[i]);
-//                //p = vec[cur];
-//            }
-//            cur++;
-//            p = vec[cur];
-//        }
-//        cout<<endl;
-//    }
-//}
-
-void LevelTra(Node* root)
+//create index file
+void WriteIndexFile(Node* root)
 {
 	fstream file;
 	file.open("test.dat", ios::out | ios::trunc | ios::binary);  //create index file
@@ -492,7 +399,6 @@ void LevelTra(Node* root)
             for(int i = 1;i <= p->branch; i++)
             {
                 vec[cur] -> p[i] = vec[cur] -> s[i] -> sequence * sizeof(Node);
-                //vec.push_back(vec[cur]->s[i]);
             }
 			file.write((char*)vec[cur], sizeof(Node));
 			file.seekp(0, ios::end);
@@ -505,67 +411,12 @@ void LevelTra(Node* root)
 	file.close();
 }
 
-
-void WriteIndexFile(Node *rootnode)
-{
-    fstream file;
-    file.open("test.dat", ios::out | ios::trunc | ios::binary);  //create index file
-    if(!file)
-        cout << "error! can't create file" << endl;
-    
-	DiskNode *disknode = (DiskNode *)malloc(sizeof(DiskNode));;
-    vector<Node*> vec;
-    vec.push_back(rootnode);
-    
-    int cur=0;
-    int last=1;
-    int nodesize = sizeof(Node);
-
-	int test = sizeof(DiskNode);
-    Node *p = rootnode;
-    while (cur<vec.size())
-    {
-        last=int(vec.size());
-        while (cur<last)
-        {
-			p = vec[cur];
-            cout<<vec[cur]->l<<"  ";
-            //disknode =(DiskNode *)malloc(sizeof(DiskNode));
-            disknode -> l = vec[cur] -> l;
-            disknode -> r = vec[cur] -> r;
-            disknode -> branch = vec[cur] -> branch;
-            disknode -> maxi = vec[cur] -> maxi;
-            disknode -> lmaxi = vec[cur] -> lmaxi;
-            disknode -> rmaxi = vec[cur] -> rmaxi;
-            disknode -> sum = vec[cur] -> sum;
-            //disknode -> l = vec[cur] -> l;
-            //disknode -> l = vec[cur] -> l;
-            //disknode -> l = vec[cur] -> l;
-            //Node *disknode = vec[cur];
-            //outfile.seekp(sizeof(DiskNode)*cur);
-            //file.seekp(sizeof(DiskNode)*cur, ios::beg);
-            file.write((char*)disknode, sizeof(DiskNode));
-            file.seekp(0, ios::end);
-            //free(disknode);
-            for(int i = 1;i <= p->branch; i++)
-            {
-                vec.push_back(vec[cur]->s[i]);
-            }
-            cur++;
-            
-        }
-        cout<<endl;
-    }
-    file.seekp(0,ios::end);
-    file.close();
-}
-
+//the function to test read from index file
 void ReadNode()
 {
 	fstream file;
-	file.open("test.dat", ios::in | ios::binary);  //open index file
+	file.open("test.dat", ios::in | ios::binary);           //open index file
 	Node *s = new Node;
-	//file.seekg(0, ios::beg);
 	file.read((char*)s, sizeof(Node));
 	cout << "zuobaian : " << s -> l << endl;
 	cout << "youbian : " << s -> r << endl;
@@ -577,67 +428,20 @@ void ReadNode()
 	cout << "pointer : " << s->p[1] << endl;
 	file.close();
 }
-Node *rootnode = (Node *)malloc(sizeof(Node)); //apply for root node
+
 int main(int argc, const char * argv[]) {
     float *p;
-    p = ReadDate("100.txt");
-    printf("total data is %d\n",g_data_num);
-    CreateTree(1, 100, rootnode, p);
-	//=======================test==========================
+    p = ReadDate("100.txt");                                //loda dataset
+    printf("total data is %d\n",g_data_num);                //show the amount of the dataset
 
-	//DiskNode *disknode = (DiskNode *)malloc(sizeof(DiskNode));
-	//disknode->l = 1;
-	//disknode->r = 100;
-	//disknode->branch = 10;
-	//disknode->maxi = 20;
-	//disknode->lmaxi = 30;
-	//disknode->rmaxi = 40;
-	//disknode->sum = 50;
-	//disknode->p[1] = 44;
-
-	//fstream file;
-	//file.open("test2.dat", ios::out | ios::trunc | ios::binary);  //create index file
-	//file.write((char*)disknode, sizeof(DiskNode));
-	//
-	//disknode->l = 1;
-	//disknode->r = 10;
-	//disknode->branch = 10;
-	//disknode->maxi = 2;
-	//disknode->lmaxi = 3;
-	//disknode->rmaxi = 4;
-	//disknode->sum = 9;
-	//disknode->p[1] = 0;
-
-	//file.seekp(0, ios::end);
-	//file.write((char*)disknode, sizeof(DiskNode));
-	//file.close();
-
-	//===============================================================
-
-	//fstream file;
-	//file.open("test2.dat", ios::in | ios::binary);  //open index file
-	//DiskNode *s = new DiskNode;
-	//
-	//file.read((char*)s, sizeof(DiskNode));
-	//cout << "zuobaian : " << s->l << endl;
-	//cout << "youbian : " << s->r << endl;
-	//cout << "pointer : " << s->p[1] << endl;
-	//file.seekg(s -> p[1], ios::beg);
-	//file.read((char*)s, sizeof(DiskNode));
-	//cout << "zuobaian : " << s->l << endl;
-	//cout << "youbian : " << s->r << endl;
-	//cout << "pointer : " << s->p[1] << endl;
-	//file.close();
-
-	//=======================test==========================
-    LevelTra(rootnode);
-
+    CreateTree(1, 100, rootnode, p);                        //create index in memory
+	WriteIndexFile(rootnode);                               //write index to disk
+	file.open("test.dat", ios::in | ios::binary);           //open index file
 	
-	file.open("test.dat", ios::in | ios::binary);  //open index file
-	//ReadNode();
 	//Node *res = QuerySeg(1, 100, 1, 10, rootnode, 0);
-    Node *res = QuerySegInDisk(1, 100, 35, 78, rootnode, 0);
+    Node *res = QuerySegInDisk(1, 100, 5, 78, rootnode, 0);//query from aa to bb 's max segment sum
     printf("maxsub sum is :%d\n",res->maxi);
+	file.close();
     free(rootnode);
     return 0;
 }
