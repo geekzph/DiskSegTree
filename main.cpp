@@ -279,6 +279,7 @@ int IntervalNumInDisk(int x, Node *tp)
 		file.read((char*)p, g_node_size);
 		if (x >= p->l && x <= p->r) m = i;
 	}
+	free(p);
 	return m;
 }
 //query segment from aa to bb's maxsub sum in disk
@@ -289,14 +290,18 @@ Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
 	Node *tpl = new Node;              //tpl is the leftmost pointer
 	Node *tpr = new Node;              //tpm is the pointer between tpl and tpr
 	Node *tpm = new Node;              //tpr is the rightmost pointer
+	Node *tpa = new Node;
 	int flag1 = 0;                        //only one branch
 	int flag2 = 0;                        //if should merge branch
 	if (num != 0)
 	{
+		cout << tp->p[num] << endl;
 		file.seekg(tp->p[num], ios::beg);     //change pointer
-		file.read((char*)tp, g_node_size);
+		file.read((char*)tpa, g_node_size);
+		cout << tpa->r << endl;
 	}
-	else file.read((char*)tp, g_node_size);
+	
+	else file.read((char*)tpa, g_node_size);
 	Node *ka, *kl, *kr, *res, *res1;
 	Kp *k = (Kp *)malloc(sizeof(Kp));     //multi-branch's pointer
 	res = (Node *)malloc(sizeof(Node));
@@ -304,36 +309,36 @@ Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
 	kl = (Node *)malloc(sizeof(Node));
 	kr = (Node *)malloc(sizeof(Node));
 	if (aa <= l && bb >= r)
-		return tp;
+		return tpa;
 	int ll = 0;
 	int rr = 0;
-	ll = IntervalNumInDisk(aa, tp);             //calculate pointer number
-	rr = IntervalNumInDisk(bb, tp);
-	file.seekg(tp->p[ll], ios::beg);
+	ll = IntervalNumInDisk(aa, tpa);             //calculate pointer number
+	rr = IntervalNumInDisk(bb, tpa);
+	file.seekg(tpa->p[ll], ios::beg);
 	file.read((char*)tpl, g_node_size);
-	file.seekg(tp->p[rr], ios::beg);
+	file.seekg(tpa->p[rr], ios::beg);
 	file.read((char*)tpr, g_node_size);
 	if (ll == rr)
 	{
 		if (tpr->r < bb)
-			ka = QuerySegInDisk(tpl->r, tpr->r, aa, tpr->r, tp, ll);
+			ka = QuerySegInDisk(tpl->r, tpr->r, aa, tpr->r, tpa, ll);
 		else
-			ka = QuerySegInDisk(tpl->l, tpr->r, aa, bb, tp, ll);
+			ka = QuerySegInDisk(tpl->l, tpr->r, aa, bb, tpa, ll);
 		flag1 = 1;
 	}
 	int i = 1;
 	if (ll < rr)
 	{
-		kl = QuerySegInDisk(tpl->l, tpl->r, aa, tpl->r, tp, ll);//lefmost point
+		kl = QuerySegInDisk(tpl->l, tpl->r, aa, tpl->r, tpa, ll);//lefmost point
 		while (ll < rr - 1)
 		{
 			file.seekg(tp->p[ll + 1], ios::beg);
 			file.read((char*)tpm, g_node_size);
-			k->s[i] = QuerySegInDisk(tpm->l, tpm->r, tpm->l, tpm->r, tp, ll + 1);
+			k->s[i] = QuerySegInDisk(tpm->l, tpm->r, tpm->l, tpm->r, tpa, ll + 1);
 			ll++;
 			i++;
 		}
-		kr = QuerySegInDisk(tpr->l, tpr->r, tpr->l, bb, tp, rr);   //rightmost point
+		kr = QuerySegInDisk(tpr->l, tpr->r, tpr->l, bb, tpa, rr);   //rightmost point
 		flag2 = 1;
 
 	}
@@ -625,13 +630,13 @@ int main(int argc, const char * argv[]) {
 	//file.close();
 
 	//=======================test==========================
-    //LevelTra(rootnode);
+    LevelTra(rootnode);
 
 	
 	file.open("test.dat", ios::in | ios::binary);  //open index file
 	//ReadNode();
 	//Node *res = QuerySeg(1, 100, 1, 10, rootnode, 0);
-    Node *res = QuerySegInDisk(1, 100, 1, 11, rootnode, 0);
+    Node *res = QuerySegInDisk(1, 100, 35, 78, rootnode, 0);
     printf("maxsub sum is :%d\n",res->maxi);
     free(rootnode);
     return 0;
