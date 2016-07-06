@@ -42,8 +42,12 @@ typedef struct Kp{                              //pointer structer
     struct Node *s[kBranchNum+1];
 } Kp;
 
+typedef struct KpDisk{                              //pointer structer
+	struct DiskNode *s[kBranchNum + 1];
+} KpDisk;
 Node *rootnode = (Node *)malloc(sizeof(Node)); //apply for root node
-int g_node_size = sizeof(Node);                //teh size of the Node structuer
+DiskNode *rootdisknode = (DiskNode *)malloc(sizeof(DiskNode)); //apply for root node
+int g_node_size = sizeof(DiskNode);                //teh size of the Node structuer
 int g_data_num = 0;                            //the amount of the dataset
 
 float * ReadDate(char filename[])
@@ -268,10 +272,57 @@ Node *QuerySeg(int l,int r,int aa,int bb, Node *tp,int num)
     return res;
 }
 
-//calculate pointer number
-int IntervalNumInDisk(int x, Node *tp)
+//merge branch in QuerySeg funcution
+//QuerySeg funtion's merge procedure is different from CreateTree funtion merge procedure
+DiskNode *MergeBranchInQDisk(DiskNode *p, KpDisk *k, DiskNode *q, int n)
 {
-	Node *p = new Node;
+	DiskNode *res = (DiskNode *)malloc(sizeof(DiskNode));
+	//only two branch to merge
+	if (n == 1)
+	{
+		res->sum = p->sum + q->sum;
+		res->lmaxi = max(p->lmaxi, p->sum + q->lmaxi);
+		res->rmaxi = max(q->rmaxi, q->sum + p->rmaxi);
+		res->maxi = max(p->rmaxi + q->lmaxi, max(p->maxi, q->maxi));
+		return res;
+
+	}
+	else
+	{
+		int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
+		for (int i = 1; i < n; i++)
+		{
+			if (i == 1)
+			{
+				res->sum = p->sum + k->s[1]->sum;
+				res->lmaxi = max(p->lmaxi, p->sum + k->s[1]->lmaxi);
+				res->rmaxi = max(k->s[1]->rmaxi, k->s[1]->sum + p->rmaxi);
+				res->maxi = max(p->rmaxi + k->s[1]->lmaxi, max(p->maxi, k->s[1]->maxi));
+				psum = res->sum, pmaxi = res->maxi, plmaxi = res->lmaxi, prmaxi = res->rmaxi;
+			}
+			else if (i > 1)
+			{
+				res->sum = psum + k->s[i]->sum;
+				res->lmaxi = max(plmaxi, psum + k->s[i]->lmaxi);
+				res->rmaxi = max(k->s[i]->rmaxi, k->s[i]->sum + prmaxi);
+				res->maxi = max(prmaxi + k->s[i]->lmaxi, max(pmaxi, k->s[i]->maxi));
+				psum = res->sum, pmaxi = res->maxi, plmaxi = res->lmaxi, prmaxi = res->rmaxi;
+			}
+
+		}
+		res->sum = psum + q->sum;
+		res->lmaxi = max(plmaxi, psum + q->lmaxi);
+		res->rmaxi = max(q->rmaxi, q->sum + prmaxi);
+		res->maxi = max(prmaxi + q->lmaxi, max(pmaxi, q->maxi));
+		return res;
+	}
+
+}
+//calculate pointer number
+DiskNode *p = new DiskNode;
+int IntervalNumInDisk(int x, DiskNode *tp)
+{
+	
 	int m = 0;
 	for (int i = 1; i <= tp->branch; i++)
 	{
@@ -279,37 +330,48 @@ int IntervalNumInDisk(int x, Node *tp)
 		file.read((char*)p, g_node_size);
 		if (x >= p->l && x <= p->r) m = i;
 	}
-	free(p);
+	//free(p);
 	return m;
 }
 
 
+
 //query segment from aa to bb's maxsub sum in disk
-Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
+DiskNode *QuerySegInDisk(int l, int r, int aa, int bb, DiskNode *tp, int num)
 {
-	Node *tpl = new Node;                      //tpl is the leftmost pointer
-	Node *tpr = new Node;                      //tpm is the pointer between tpl and tpr
-	Node *tpm = new Node;                      //tpr is the rightmost pointer
-	Node *tpa = new Node;
+	DiskNode *tpl = new DiskNode;                      //tpl is the leftmost pointer
+	DiskNode *tpr = new DiskNode;                      //tpm is the pointer between tpl and tpr
+	DiskNode *tpm = new DiskNode;                      //tpr is the rightmost pointer
+	DiskNode *tpa = new DiskNode;
 	int flag1 = 0;                             //only one branch
 	int flag2 = 0;                             //if should merge branch
 	if (num != 0)
 	{
-		cout << tp->p[num] << endl;
 		file.seekg(tp->p[num], ios::beg);      //change pointer
 		file.read((char*)tpa, g_node_size);
-		cout << tpa->r << endl;
 	}
 	
 	else file.read((char*)tpa, g_node_size);
-	Node *ka, *kl, *kr, *res, *res1;
-	Kp *k = (Kp *)malloc(sizeof(Kp));           //multi-branch's pointer
-	res = (Node *)malloc(sizeof(Node));
-	ka = (Node *)malloc(sizeof(Node));
-	kl = (Node *)malloc(sizeof(Node));
-	kr = (Node *)malloc(sizeof(Node));
+	DiskNode *ka = new DiskNode;
+	DiskNode *kl = new DiskNode;
+	DiskNode *kr = new DiskNode;
+	DiskNode *res = new DiskNode;
+	DiskNode *res1 = new DiskNode;
+	KpDisk *k = (KpDisk *)malloc(sizeof(KpDisk));           //multi-branch's pointer
 	if (aa <= l && bb >= r)
+	{
+		delete[] tpl;
+		delete[] tpr;
+		delete[] tpm;
+
+		delete[] ka;
+		delete[] kl;
+		delete[] kr;
+		delete[] res;
+		delete[] res1;
 		return tpa;
+	}
+		
 	int ll = 0;
 	int rr = 0;
 	ll = IntervalNumInDisk(aa, tpa);            //calculate pointer number
@@ -332,7 +394,7 @@ Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
 		kl = QuerySegInDisk(tpl->l, tpl->r, aa, tpl->r, tpa, ll);   //lefmost point
 		while (ll < rr - 1)
 		{
-			file.seekg(tp->p[ll + 1], ios::beg);
+			file.seekg(tpa->p[ll + 1], ios::beg);
 			file.read((char*)tpm, g_node_size);
 			k->s[i] = QuerySegInDisk(tpm->l, tpm->r, tpm->l, tpm->r, tpa, ll + 1);
 			ll++;
@@ -348,12 +410,21 @@ Node *QuerySegInDisk(int l, int r, int aa, int bb, Node *tp, int num)
 	}
 	else if (flag2 == 1)
 	{
-		res1 = MergeBranchInQ(kl, k, kr, i);
+		res1 = MergeBranchInQDisk(kl, k, kr, i);
 		res->sum = res1->sum;
 		res->lmaxi = res1->lmaxi;
 		res->rmaxi = res1->rmaxi;
 		res->maxi = res1->maxi;
 	}
+	delete[] tpl;
+	delete[] tpr;
+	delete[] tpm;
+
+
+	delete[] kl;
+	delete[] kr;
+
+	delete[] res1;
 	return res;
 }
 
@@ -448,19 +519,28 @@ void ReadNode()
 
 int main(int argc, const char * argv[]) {
     float *p;
-    p = ReadDate("100.txt");                                //loda dataset
+    p = ReadDate("data.txt");                                //loda dataset
     printf("total data is %d\n",g_data_num);                //show the amount of the dataset
-
-    CreateTree(1, 100, rootnode, p);                        //create index in memory
-	WriteIndexFile(rootnode);                             //write index to disk
-	int size = sizeof(int);
-	ReadNode();
+	int a = 1;                                              //a to b index
+	int b = 20000;
+	int left = 1;
+	int right = 20000;
+    CreateTree(a, b, rootnode, p);                        //create index in memory
+	//WriteIndexFile(rootnode);                             //write index to disk
+	//ReadNode();
 	file.open("test.dat", ios::in | ios::binary);           //open index file
+	while (1)
+	{
+		cin >> left >> right;
+		Node *res1 = QuerySeg(a, b, left, right, rootnode, 0);
+		DiskNode *res2 = QuerySegInDisk(a, b, left, right, rootdisknode, 0);//query from aa to bb 's max segment sum
+		cout << "maxsub sum is " << res1->maxi << " in memory" << endl;
+		cout << "maxsub sum is " << res2->maxi << " in index file" << endl;
+	}
 	
-	Node *res = QuerySeg(1, 20000, 99, 19000, rootnode, 0);
-    //Node *res = QuerySegInDisk(1, 20000, 99, 19000, rootnode, 0);//query from aa to bb 's max segment sum
-    printf("maxsub sum is :%d\n",res->maxi);
+	
 	file.close();
     free(rootnode);
+	free(rootdisknode);
     return 0;
 }
