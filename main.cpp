@@ -19,15 +19,21 @@ using namespace std;
 
 const int kBranchNum = 10;                       //const branch number
 fstream file;
+
+typedef struct Info{
+	int maxi, lmaxi, rmaxi, sum;
+};
 typedef struct Node{                             //Node structure
     int l;
     int r;
     int branch;
     int maxi,lmaxi,rmaxi,sum;
-    int p[kBranchNum+1];
-    struct Node *s[kBranchNum+1];
+    int p[kBranchNum + 1];
+    struct Node *s[kBranchNum + 1];
+	Info info[kBranchNum][kBranchNum];
 	int sequence;
-} Node;
+} Node; 
+
 
 typedef struct DiskNode{                             //Node structure
 	int l;
@@ -45,6 +51,7 @@ typedef struct Kp{                              //pointer structer
 typedef struct KpDisk{                              //pointer structer
 	struct DiskNode *s[kBranchNum + 1];
 } KpDisk;
+
 Node *rootnode = (Node *)malloc(sizeof(Node)); //apply for root node
 DiskNode *rootdisknode = (DiskNode *)malloc(sizeof(DiskNode)); //apply for root node
 int g_node_size = sizeof(DiskNode);                //teh size of the Node structuer
@@ -112,7 +119,26 @@ void MergeBranchInC(Node *p,int n)
     
 }
 
-
+//merge branch in AddInfo
+void MergeBranchInAddInfo(Node *p, int i, int j)
+{
+	int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
+	int sum = 0,  maxi = 0, lmaxi = 0, rmaxi = 0, m = i;
+	psum = p->s[i]->sum, pmaxi = p->s[i]->maxi, plmaxi = p->s[i]->lmaxi, prmaxi = p->s[i]->rmaxi;
+	for (i = i ; i < j; i++)
+	{
+		int m = i + 1;
+		sum = psum + p->s[m]->sum;
+		maxi = max(pmaxi, max(p->s[m]->maxi, prmaxi + p->s[m]->lmaxi));
+		lmaxi = max(plmaxi, psum + p->s[m]->lmaxi);
+		rmaxi = max(p->s[m]->rmaxi, p->s[m]->sum + prmaxi);
+		psum = sum, pmaxi = maxi, plmaxi = lmaxi, prmaxi = rmaxi;
+	}
+	p->info[m][j].sum = psum;
+	p->info[m][j].maxi = pmaxi;
+	p->info[m][j].lmaxi = plmaxi;
+	p->info[m][j].rmaxi = prmaxi;
+}
 
 //merge branch in QuerySeg funcution
 //QuerySeg funtion's merge procedure is different from CreateTree funtion merge procedure
@@ -206,6 +232,45 @@ void CreateTree(int l ,int r , Node *tp, float x[])
     MergeBranchInC(tp, i - 1);
 }
 
+void AddInfo(Node* root)
+{
+	if (!root)
+	{
+		return;
+	}
+	vector<Node*> vec;
+	vec.push_back(root);
+
+	int cur = 0;
+	int last = 1;
+	Node *p = root;
+	while (cur<vec.size())
+	{
+		last = int(vec.size());
+		while (cur<last)
+		{
+			p = vec[cur];
+			cout << vec[cur]->l << "  ";
+			//insert info 
+			for (int i = 2; i <= vec[cur] -> branch - 1; i++)
+			{
+				for (int j = i + 1; j <= vec[cur] -> branch - 1; j++)
+				{
+					MergeBranchInAddInfo(vec[cur], i, j);
+					
+				}
+			}
+			
+			for (int i = 1; i <= p->branch; i++)
+			{
+				vec.push_back(vec[cur]->s[i]);
+			}
+			cur++;
+
+		}
+		cout << endl;
+	}
+}
 //calculate pointer number
 int IntervalNum(int x,Node *p)
 {
@@ -357,7 +422,7 @@ DiskNode *QuerySegInDisk(int l, int r, int aa, int bb, DiskNode *tp, int num)
 	DiskNode *kr = new DiskNode;
 	DiskNode *res = new DiskNode;
 	DiskNode *res1 = new DiskNode;
-	KpDisk *k = (KpDisk *)malloc(sizeof(KpDisk));           //multi-branch's pointer
+	KpDisk *k = new KpDisk;           //multi-branch's pointer
 	if (aa <= l && bb >= r)
 	{
 		delete[] tpl;
@@ -369,6 +434,7 @@ DiskNode *QuerySegInDisk(int l, int r, int aa, int bb, DiskNode *tp, int num)
 		delete[] kr;
 		delete[] res;
 		delete[] res1;
+		delete[] k;
 		return tpa;
 	}
 		
@@ -519,13 +585,14 @@ void ReadNode()
 
 int main(int argc, const char * argv[]) {
     float *p;
-    p = ReadDate("data.txt");                                //loda dataset
+    p = ReadDate("100.txt");                                //loda dataset
     printf("total data is %d\n",g_data_num);                //show the amount of the dataset
 	int a = 1;                                              //a to b index
-	int b = 20000;
+	int b = 100;
 	int left = 1;
-	int right = 20000;
+	int right = 100;
     CreateTree(a, b, rootnode, p);                        //create index in memory
+	AddInfo(rootnode);
 	//WriteIndexFile(rootnode);                             //write index to disk
 	//ReadNode();
 	file.open("test.dat", ios::in | ios::binary);           //open index file
