@@ -17,7 +17,7 @@
 #include <malloc.h>
 using namespace std;
 
-const int kBranchNum = 10;                       //const branch number
+const int kBranchNum = 5;                       //const branch number
 fstream file;
 
 typedef struct Info{
@@ -57,33 +57,34 @@ Node *rootnode = (Node *)malloc(sizeof(Node)); //apply for root node
 DiskNode *rootdisknode = (DiskNode *)malloc(sizeof(DiskNode)); //apply for root node
 int g_node_size = sizeof(DiskNode);                //teh size of the Node structuer
 int g_data_num = 0;                            //the amount of the dataset
-
-float * ReadDate(char filename[])
+const int g_data_line = 5000000;
+int data[g_data_line + 1];
+void ReadDate(char filename[])
 {
     g_data_num = 0;
-    float r[20004];
+	//int r[g_data_line + 1];
     FILE *fp;
-    double result = 0.0;
-    char strline[8];                            //each line's max-character
+    int result = 0;
+    char strline[10];                            //each line's max-character
 	errno_t err;
 	err = fopen_s(&fp, filename, "r");
 	if (err != 0)                               //open file
 	{
 		printf("error!");
-		return NULL;
+		
 	}
-    while (!feof(fp))
+    while (!feof(fp) && g_data_num < g_data_line)
     {
         fgets(strline,12,fp);                   //read a line
-        result=atof(strline);
+        result=atoi(strline);
         g_data_num++;
-        r[g_data_num] =result;
+        data[g_data_num] =result;
         
         
     }
     fclose(fp);                                 //close file
     printf("read data file successed\n");
-    return r;
+    //return r;
 }
 
 //return max value
@@ -176,7 +177,7 @@ Node *MergeBranchInQ(Node *p, Info *k, Node *q, int n)
 }
 
 //create multi-branch tree
-void CreateTree(int l ,int r , Node *tp, float x[])
+void CreateTree(int l ,int r , Node *tp, int x[])
 {
     int i = 1;
     int ll = l;
@@ -192,6 +193,7 @@ void CreateTree(int l ,int r , Node *tp, float x[])
         tp->r = rr;
         tp->maxi = tp->lmaxi = tp->rmaxi = tp->sum = x[ll];
 		tp->branch = 0;
+		free(tp);
         return;
     }
     
@@ -568,16 +570,17 @@ void ReadNode()
 }
 
 int main(int argc, const char * argv[]) {
-    float *p;
-    p = ReadDate("data.txt");                                //loda dataset
+    int *p;
+    ReadDate("data.txt");                                //loda dataset
+	p = data;
     printf("total data is %d\n",g_data_num);                //show the amount of the dataset
 	int a = 1;                                              //a to b index
-	int b = 20000;
+	int b = g_data_line;
 	int left = 1;
 	int right = 100;
     CreateTree(a, b, rootnode, p);                        //create index in memory
 	AddInfo(rootnode);
-	//WriteIndexFile(rootnode);                             //write index to disk
+	WriteIndexFile(rootnode);                             //write index to disk
 	//ReadNode();
 	file.open("test.dat", ios::in | ios::binary);           //open index file
 	while (1)
