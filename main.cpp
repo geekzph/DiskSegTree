@@ -142,7 +142,7 @@ void MergeBranchInAddInfo(Node *p, int i, int j)
 
 //merge branch in QuerySeg funcution
 //QuerySeg funtion's merge procedure is different from CreateTree funtion merge procedure
-Node *MergeBranchInQ(Node *p, Kp *k, Node *q, int n)
+Node *MergeBranchInQ(Node *p, Info *k, Node *q, int n)
 {
     Node *res = (Node *)malloc(sizeof(Node));
         //only two branch to merge
@@ -155,36 +155,23 @@ Node *MergeBranchInQ(Node *p, Kp *k, Node *q, int n)
         return res;
 
     }
-    else
-    {
-        int psum=0,pmaxi=0,plmaxi=0,prmaxi=0;
-        for (int i = 1; i < n; i++)
-        {
-            if (i == 1)
-            {
-                res->sum = p->sum + k->s[1]->sum;
-                res->lmaxi = max(p->lmaxi,p->sum + k->s[1]->lmaxi);
-                res->rmaxi = max(k->s[1]->rmaxi,k->s[1]->sum + p->rmaxi);
-                res->maxi = max(p->rmaxi+k->s[1]->lmaxi,max(p->maxi,k->s[1]->maxi));
-                psum=res->sum ,pmaxi=res->maxi,plmaxi=res->lmaxi,prmaxi=res->rmaxi;
-            }
-            else if(i > 1)
-            {
-                res->sum = psum + k->s[i]->sum;
-                res->lmaxi = max(plmaxi,psum + k->s[i]->lmaxi);
-                res->rmaxi = max(k->s[i]->rmaxi,k->s[i]->sum + prmaxi);
-                res->maxi = max(prmaxi+k->s[i]->lmaxi,max(pmaxi,k->s[i]->maxi));
-                psum=res->sum ,pmaxi=res->maxi,plmaxi=res->lmaxi,prmaxi=res->rmaxi;
-            }
-            
-        }
-        res->sum = psum + q->sum;
-        res->lmaxi = max(plmaxi,psum + q->lmaxi);
-        res->rmaxi = max(q->rmaxi,q->sum + prmaxi);
-        res->maxi = max(prmaxi+q->lmaxi,max(pmaxi,q->maxi));
-        return res;
-    }
-    
+	if (n == 3)
+	{
+		int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
+		res->sum = p->sum + k->sum;
+		res->lmaxi = max(p->lmaxi, p->sum + k->lmaxi);
+		res->rmaxi = max(k->rmaxi, k->sum + p->rmaxi);
+		res->maxi = max(p->rmaxi + k->lmaxi, max(p->maxi, k->maxi));
+
+		psum = res->sum, pmaxi = res->maxi, plmaxi = res->lmaxi, prmaxi = res->rmaxi;
+
+		res->sum = psum + q->sum;
+		res->lmaxi = max(plmaxi, psum + q->lmaxi);
+		res->rmaxi = max(q->rmaxi, q->sum + prmaxi);
+		res->maxi = max(prmaxi + q->lmaxi, max(pmaxi, q->maxi));
+	}
+   
+	return res;
 }
 
 //create multi-branch tree
@@ -254,7 +241,7 @@ void AddInfo(Node* root)
 			//insert info 
 			for (int i = 2; i <= vec[cur] -> branch - 1; i++)
 			{
-				for (int j = i + 1; j <= vec[cur] -> branch - 1; j++)
+				for (int j = i; j <= vec[cur] -> branch - 1; j++)
 				{
 					MergeBranchInAddInfo(vec[cur], i, j);
 					
@@ -294,6 +281,7 @@ Node *QuerySeg(int l,int r,int aa,int bb, Node *tp,int num)
     ka = (Node *)malloc(sizeof(Node));
     kl = (Node *)malloc(sizeof(Node));
     kr = (Node *)malloc(sizeof(Node));
+	Info *info = new Info;
     if(aa <= l && bb >= r)
         return tp;
     int ll = 0;
@@ -308,19 +296,28 @@ Node *QuerySeg(int l,int r,int aa,int bb, Node *tp,int num)
             ka = QuerySeg(tp -> s[ll] ->l,tp -> s[rr]->r, aa, bb, tp, ll);
         flag1 = 1;
     }
-    int i = 1;
+    int n = 1;
     if(ll < rr)
     {
         kl = QuerySeg(tp -> s[ll] ->l,tp -> s[ll] ->r, aa, tp -> s[ll] ->r, tp, ll);//lefmost point
-        while (ll < rr - 1)
+        /*while (ll < rr - 1)
         {
             k -> s[i] = QuerySeg(tp -> s[ll+1] ->l,tp -> s[ll+1] ->r, tp -> s[ll+1] ->l, tp -> s[ll+1] ->r, tp, ll+1);
             ll++;
             i++;
-        }
+        }*/
+		if (ll < rr - 1)
+		{
+			info->maxi = tp->info[ll + 1][rr - 1].maxi;
+			info->lmaxi = tp->info[ll + 1][rr - 1].lmaxi;
+			info->rmaxi = tp->info[ll + 1][rr - 1].rmaxi;
+			info->sum = tp->info[ll + 1][rr - 1].sum;
+			n = 3;
+		}
+		
         kr = QuerySeg(tp -> s[rr] ->l,tp -> s[rr] ->r, tp -> s[rr] ->l, bb, tp, rr);//rightmost point
         flag2 = 1;
-        
+		
     }
     if (flag1 == 1)
     {
@@ -328,7 +325,7 @@ Node *QuerySeg(int l,int r,int aa,int bb, Node *tp,int num)
     }
     else if(flag2 == 1)
     {
-        res1 = MergeBranchInQ(kl, k, kr, i);
+        res1 = MergeBranchInQ(kl, info, kr, n);
         res -> sum = res1 -> sum;
         res -> lmaxi = res1 -> lmaxi;
         res -> rmaxi = res1 -> rmaxi;
@@ -600,9 +597,9 @@ int main(int argc, const char * argv[]) {
 	{
 		cin >> left >> right;
 		Node *res1 = QuerySeg(a, b, left, right, rootnode, 0);
-		DiskNode *res2 = QuerySegInDisk(a, b, left, right, rootdisknode, 0);//query from aa to bb 's max segment sum
+		//DiskNode *res2 = QuerySegInDisk(a, b, left, right, rootdisknode, 0);//query from aa to bb 's max segment sum
 		cout << "maxsub sum is " << res1->maxi << " in memory" << endl;
-		cout << "maxsub sum is " << res2->maxi << " in index file" << endl;
+		//cout << "maxsub sum is " << res2->maxi << " in index file" << endl;
 	}
 	
 	
