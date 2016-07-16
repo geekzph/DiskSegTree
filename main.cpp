@@ -57,7 +57,7 @@ Node *rootnode = (Node *)malloc(sizeof(Node)); //apply for root node
 DiskNode *rootdisknode = (DiskNode *)malloc(sizeof(DiskNode)); //apply for root node
 int g_node_size = sizeof(DiskNode);                //teh size of the Node structuer
 int g_data_num = 0;                            //the amount of the dataset
-const int g_data_line = 5000000;
+const int g_data_line = 10000;
 int data[g_data_line + 1];
 void ReadDate(char filename[])
 {
@@ -85,6 +85,25 @@ void ReadDate(char filename[])
     fclose(fp);                                 //close file
     printf("read data file successed\n");
     //return r;
+}
+
+void GetData(string filename,int start, int end)
+{
+	ifstream file;
+	char line[8];
+	file.open(filename, ios::in);
+	int i = 0;
+	while (i <= end && !file.eof())
+	{
+		i++;
+		file.getline(line,10);
+		if (i >= start)
+		{
+			g_data_num++;
+			data[g_data_num] = atoi(line);
+		}
+	}
+	file.close();
 }
 
 //return max value
@@ -571,13 +590,14 @@ void ReadNode()
 
 int main(int argc, const char * argv[]) {
     int *p;
-    ReadDate("data.txt");                                //loda dataset
+	GetData("data1000w.txt", 20001, 30000);
+    ReadDate("data1000w.txt");                                //loda dataset
 	p = data;
     printf("total data is %d\n",g_data_num);                //show the amount of the dataset
 	int a = 1;                                              //a to b index
 	int b = g_data_line;
-	int left = 1;
-	int right = 100;
+	int left = 2000001;
+	int right = 3000000;
     CreateTree(a, b, rootnode, p);                        //create index in memory
 	AddInfo(rootnode);
 	WriteIndexFile(rootnode);                             //write index to disk
