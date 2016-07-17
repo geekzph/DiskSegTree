@@ -57,36 +57,36 @@ Node *rootnode = (Node *)malloc(sizeof(Node)); //apply for root node
 DiskNode *rootdisknode = (DiskNode *)malloc(sizeof(DiskNode)); //apply for root node
 int g_node_size = sizeof(DiskNode);                //teh size of the Node structuer
 int g_data_num = 0;                            //the amount of the dataset
-const int g_data_line = 10000;
-int data[g_data_line + 1];
-void ReadDate(char filename[])
-{
-    g_data_num = 0;
-	//int r[g_data_line + 1];
-    FILE *fp;
-    int result = 0;
-    char strline[10];                            //each line's max-character
-	errno_t err;
-	err = fopen_s(&fp, filename, "r");
-	if (err != 0)                               //open file
-	{
-		printf("error!");
-		
-	}
-    while (!feof(fp) && g_data_num < g_data_line)
-    {
-        fgets(strline,12,fp);                   //read a line
-        result=atoi(strline);
-        g_data_num++;
-        data[g_data_num] =result;
-        
-        
-    }
-    fclose(fp);                                 //close file
-    printf("read data file successed\n");
-    //return r;
-}
 
+//void ReadDate(char filename[])
+//{
+//    g_data_num = 0;
+//	//int r[g_data_line + 1];
+//    FILE *fp;
+//    int result = 0;
+//    char strline[10];                            //each line's max-character
+//	errno_t err;
+//	err = fopen_s(&fp, filename, "r");
+//	if (err != 0)                               //open file
+//	{
+//		printf("error!");
+//		
+//	}
+//    while (!feof(fp) && g_data_num < g_data_line)
+//    {
+//        fgets(strline,12,fp);                   //read a line
+//        result=atoi(strline);
+//        g_data_num++;
+//        data[g_data_num] =result;
+//        
+//        
+//    }
+//    fclose(fp);                                 //close file
+//    printf("read data file successed\n");
+//    //return r;
+//}
+const int g_data_line = 20000;
+int data[g_data_line + 1];
 void GetData(string filename,int start, int end)
 {
 	ifstream file;
@@ -212,7 +212,7 @@ void CreateTree(int l ,int r , Node *tp, int x[])
         tp->r = rr;
         tp->maxi = tp->lmaxi = tp->rmaxi = tp->sum = x[ll];
 		tp->branch = 0;
-		free(tp);
+		//free(tp);
         return;
     }
     
@@ -259,7 +259,7 @@ void AddInfo(Node* root)
 		while (cur<last)
 		{
 			p = vec[cur];
-			cout << vec[cur]->l << "  ";
+			cout << vec[cur]->branch << "  ";
 			//insert info 
 			for (int i = 2; i <= vec[cur] -> branch - 1; i++)
 			{
@@ -521,7 +521,7 @@ void WriteIndexFile(Node* root)
         while (cur<last)
         {
 			p = vec[cur];
-            cout<<vec[cur]->l<<"  ";
+           
             vec[cur] -> sequence = cur;
             for(int i = 1;i <= p->branch; i++)
             {
@@ -543,7 +543,7 @@ void WriteIndexFile(Node* root)
         while (cur<last)
         {
 			p = vec[cur];
-			
+			cout << vec[cur]->sequence << "  ";
             for(int i = 1;i <= p->branch; i++)
             {
                 vec[cur] -> p[i] = vec[cur] -> s[i] -> sequence * sizeof(DiskNode);
@@ -590,8 +590,7 @@ void ReadNode()
 
 int main(int argc, const char * argv[]) {
     int *p;
-	GetData("data1000w.txt", 20001, 30000);
-    ReadDate("data1000w.txt");                                //loda dataset
+	GetData("data2w.txt", 1, 20000);
 	p = data;
     printf("total data is %d\n",g_data_num);                //show the amount of the dataset
 	int a = 1;                                              //a to b index
@@ -601,7 +600,7 @@ int main(int argc, const char * argv[]) {
     CreateTree(a, b, rootnode, p);                        //create index in memory
 	AddInfo(rootnode);
 	WriteIndexFile(rootnode);                             //write index to disk
-	//ReadNode();
+	///////ReadNode();
 	file.open("test.dat", ios::in | ios::binary);           //open index file
 	while (1)
 	{
