@@ -85,7 +85,7 @@ int g_data_num = 0;                            //the amount of the dataset
 //    printf("read data file successed\n");
 //    //return r;
 //}
-const int g_data_line = 20000;
+const int g_data_line = 1000000;
 int data[g_data_line + 1];
 void GetData(string filename,int start, int end)
 {
@@ -589,15 +589,14 @@ void ReadNode()
 }
 
 int main(int argc, const char * argv[]) {
-    int *p;
-	GetData("data2w.txt", 1, 20000);
-	p = data;
-    printf("total data is %d\n",g_data_num);                //show the amount of the dataset
+    
 	int a = 1;                                              //a to b index
 	int b = g_data_line;
-	int left = 2000001;
-	int right = 3000000;
-    CreateTree(a, b, rootnode, p);                        //create index in memory
+	GetData("1000w.txt", 1, 1000000);
+    printf("total data is %d\n",g_data_num);                //show the amount of the dataset
+	int left = 0;
+	int right = 0;
+    CreateTree(a, b, rootnode, data);                        //create index in memory
 	AddInfo(rootnode);
 	WriteIndexFile(rootnode);                             //write index to disk
 	///////ReadNode();
