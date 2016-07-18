@@ -389,6 +389,8 @@ DiskNode *MergeBranchInQDisk(DiskNode *p, Info *k, DiskNode *q, int n)
 	return res;
 
 }
+
+int ionum = 0;
 //calculate pointer number
 DiskNode *p = new DiskNode;
 int IntervalNumInDisk(int x, DiskNode *tp)
@@ -401,11 +403,28 @@ int IntervalNumInDisk(int x, DiskNode *tp)
 		file.read((char*)p, g_node_size);
 		if (x >= p->l && x <= p->r) m = i;
 	}
-	//free(p);
 	return m;
 }
 
+int IntervalNumInDisk2(int x, DiskNode *tp)
+{
 
+	int m = 0;
+	int seg = (tp->r - tp->l) / kBranchNum;
+	int l = tp -> l;
+	int r = tp -> l + seg;
+	for (int i = 1; i <= tp->branch; i++)
+	{
+		if (x >= l && x <= r)
+		{
+			m = i;
+			break;
+		}
+		l = l + seg + 1;
+		r = l + seg;
+	}
+	return m;
+}
 
 //query segment from aa to bb's maxsub sum in disk
 DiskNode *QuerySegInDisk(int l, int r, int aa, int bb, DiskNode *tp, int num)
@@ -418,6 +437,7 @@ DiskNode *QuerySegInDisk(int l, int r, int aa, int bb, DiskNode *tp, int num)
 	int flag2 = 0;                             //if should merge branch
 	if (num != 0)
 	{
+		ionum++;
 		file.seekg(tp->p[num], ios::beg);      //change pointer
 		file.read((char*)tpa, g_node_size);
 	}
@@ -444,10 +464,18 @@ DiskNode *QuerySegInDisk(int l, int r, int aa, int bb, DiskNode *tp, int num)
 		
 	int ll = 0;
 	int rr = 0;
+	int ll2 = 0;
+	int rr2 = 0;
 	ll = IntervalNumInDisk(aa, tpa);            //calculate pointer number
 	rr = IntervalNumInDisk(bb, tpa);
+	ll2 = IntervalNumInDisk2(aa, tpa);            //calculate pointer number
+	rr2 = IntervalNumInDisk2(bb, tpa);
+	if (ll != ll2) cout << "error" << endl;
+	if (rr != rr2) cout << "error" << endl;
+	ionum++;
 	file.seekg(tpa->p[ll], ios::beg);
 	file.read((char*)tpl, g_node_size);
+	ionum++;
 	file.seekg(tpa->p[rr], ios::beg);
 	file.read((char*)tpr, g_node_size);
 	if (ll == rr)
@@ -574,12 +602,12 @@ void WriteIndexFile(Node* root)
 void ReadNode()
 {
 	fstream file;
-	file.open("test.dat", ios::in | ios::binary);           //open index file
+	file.open("1000w-10.dat", ios::in | ios::binary);           //open index file
 	DiskNode *s = new DiskNode;
 	file.read((char*)s, sizeof(DiskNode));
-	cout << "zuobaian : " << s -> l << endl;
-	cout << "youbian : " << s -> r << endl;
-	cout << "pointer : " << s -> p[1] << endl;
+	cout << "最大值 : " << s -> maxi << endl;
+	//cout << "youbian : " << s -> r << endl;
+	//cout << "pointer : " << s -> p[1] << endl;
 	file.seekg(s -> p[1], ios::beg);
 	file.read((char*)s, sizeof(DiskNode));
 	cout << "zuobaian : " << s->l << endl;
@@ -589,25 +617,26 @@ void ReadNode()
 }
 
 int main(int argc, const char * argv[]) {
-    
+	//ReadNode();
 	int a = 1;                                              //a to b index
 	int b = g_data_line;
-	GetData("1000w.txt", 1, 1000000);
-    printf("total data is %d\n",g_data_num);                //show the amount of the dataset
+	//GetData("1000w.txt", 9000001, 10000000);
+    //printf("total data is %d\n",g_data_num);                //show the amount of the dataset
 	int left = 0;
 	int right = 0;
-    CreateTree(a, b, rootnode, data);                        //create index in memory
-	AddInfo(rootnode);
-	WriteIndexFile(rootnode);                             //write index to disk
+    //CreateTree(a, b, rootnode, data);                        //create index in memory
+	//AddInfo(rootnode);
+	//WriteIndexFile(rootnode);                             //write index to disk
 	///////ReadNode();
-	file.open("test.dat", ios::in | ios::binary);           //open index file
+	file.open("1000w-1.dat", ios::in | ios::binary);           //open index file
 	while (1)
 	{
 		cin >> left >> right;
-		Node *res1 = QuerySeg(a, b, left, right, rootnode, 0);
-		cout << "maxsub sum is " << res1->maxi << " in memory" << endl;
+		//Node *res1 = QuerySeg(a, b, left, right, rootnode, 0);
+		//cout << "maxsub sum is " << res1->maxi << " in memory" << endl;
 		DiskNode *res2 = QuerySegInDisk(a, b, left, right, rootdisknode, 0);//query from aa to bb 's max segment sum
 		cout << "maxsub sum is " << res2->maxi << " in index file" << endl;
+		cout << "I/O number is " << ionum << endl;
 	}
 	
 	
