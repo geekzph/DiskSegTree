@@ -15,6 +15,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
+#include <sstream>
 using namespace std;
 
 const int kBranchNum = 5;                       //const branch number
@@ -34,6 +36,11 @@ typedef struct Node{                             //Node structure
 	int sequence;
 } Node; 
 
+typedef struct AllFileNode{                             //Node structure
+	int maxi, lmaxi, rmaxi, sum;
+	struct AllFileNode *s[11];
+	Info info[11][11];
+} allnode;
 
 typedef struct DiskNode{                             //Node structure
 	int l;
@@ -260,7 +267,7 @@ void AddInfo(Node* root)
 		{
 			p = vec[cur];
 			cout << vec[cur]->branch << "  ";
-			//insert info 
+			//add info 
 			for (int i = 2; i <= vec[cur] -> branch - 1; i++)
 			{
 				for (int j = i; j <= vec[cur] -> branch - 1; j++)
@@ -598,6 +605,68 @@ void WriteIndexFile(Node* root)
 	file.close();
 }
 
+void MergeInWriteNodeIndex(AllFileNode *p, int i, int j)
+{
+	int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
+	int sum = 0, maxi = 0, lmaxi = 0, rmaxi = 0, m = i;
+	psum = p->s[i]->sum, pmaxi = p->s[i]->maxi, plmaxi = p->s[i]->lmaxi, prmaxi = p->s[i]->rmaxi;
+	for (i = i; i < j; i++)
+	{
+		int m = i + 1;
+		sum = psum + p->s[m]->sum;
+		maxi = max(pmaxi, max(p->s[m]->maxi, prmaxi + p->s[m]->lmaxi));
+		lmaxi = max(plmaxi, psum + p->s[m]->lmaxi);
+		rmaxi = max(p->s[m]->rmaxi, p->s[m]->sum + prmaxi);
+		psum = sum, pmaxi = maxi, plmaxi = lmaxi, prmaxi = rmaxi;
+	}
+	p->info[m][j].sum = psum;
+	p->info[m][j].maxi = pmaxi;
+	p->info[m][j].lmaxi = plmaxi;
+	p->info[m][j].rmaxi = prmaxi;
+}
+
+
+void WriteNodeIndex()
+{
+	fstream file;
+	DiskNode *p = new DiskNode;
+	
+	AllFileNode *nodeindex = new AllFileNode;
+	string indexname;
+	char filenum[12];
+	for (int i = 1; i <= 10; i++)
+	{
+		string indexname = "";
+		stringstream convert;
+		convert << i;//add the value of Number to the characters in the stream
+		indexname ="index\\" + convert.str() + ".dat";//set Result to the content of the stream
+		file.open(indexname, ios::in | ios::binary);           //open index file
+		file.read((char*)p, sizeof(DiskNode));
+
+		AllFileNode *node = new AllFileNode();
+		node->sum = p->sum;
+		node->maxi = p->maxi;
+		node->lmaxi = p->lmaxi;
+		node->rmaxi = p->rmaxi;
+		nodeindex->s[i] = node;
+		file.close();
+		//delete[] s;
+	}
+	
+	//add info 
+	for (int i = 1; i <= 10; i++)
+	{
+		for (int j = i; j <= 10; j++)
+		{
+			MergeInWriteNodeIndex(nodeindex, i, j);
+
+		}
+	}
+	file.open("NodeIndex.dat", ios::out | ios::trunc | ios::binary);  //create index file
+	file.write((char*)nodeindex, sizeof(AllFileNode));
+	file.close();
+	
+}
 //the function to test read from index file
 void ReadNode()
 {
@@ -617,6 +686,7 @@ void ReadNode()
 }
 
 int main(int argc, const char * argv[]) {
+	WriteNodeIndex();
 	//ReadNode();
 	int a = 1;                                              //a to b index
 	int b = g_data_line;
