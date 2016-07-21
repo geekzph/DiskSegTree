@@ -809,7 +809,7 @@ int main(int argc, const char * argv[]) {
 		int r2 = right % 1000000;
 
 		stringstream convert;
-		convert << l1;
+		convert << l1 + 1;
 		string filename = "index\\" + convert.str() + ".dat";
 
 		file.open(filename, ios::in | ios::binary);           //open index file
@@ -818,35 +818,51 @@ int main(int argc, const char * argv[]) {
 		filename.clear();
 		
 		stringstream convert2;
-		convert2 << r1;
+		convert2 << r1 + 1;
 		filename = "index\\" + convert2.str() + ".dat";
 		file.open(filename, ios::in | ios::binary);           //open index file
 		DiskNode *res3 = QuerySegInDisk(a, b, 1, r2, rootdisknode, 0);//query from aa to bb 's max segment sum
 		file.close();
 
-		fstream file2;
-		file2.open("NodeIndex.dat", ios::in | ios::binary);
-		AllFileNode *s = new AllFileNode;
-		//file2.seekg(sizeof(AllFileNode), ios::beg);
-		file2.read((char*)s, sizeof(AllFileNode));
-		Info res2 = s->info[l1][r1];
+		if ((r1 - l1) >= 2)
+		{
+			fstream file2;
+			file2.open("NodeIndex.dat", ios::in | ios::binary);
+			AllFileNode *s = new AllFileNode;
+			//file2.seekg(sizeof(AllFileNode), ios::beg);
+			file2.read((char*)s, sizeof(AllFileNode));
+			Info res2 = s->info[l1 + 2][r1];
 
-		DiskNode *res = new DiskNode();
-		int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
-		res->sum = res1->sum + res2.sum;
-		res->lmaxi = max(res1->lmaxi, res1->sum + res2.lmaxi);
-		res->rmaxi = max(res2.rmaxi, res2.sum + res1->rmaxi);
-		res->maxi = max(res1->rmaxi + res2.lmaxi, max(res1->maxi, res2.maxi));
+			DiskNode *res = new DiskNode();
+			int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
+			res->sum = res1->sum + res2.sum;
+			res->lmaxi = max(res1->lmaxi, res1->sum + res2.lmaxi);
+			res->rmaxi = max(res2.rmaxi, res2.sum + res1->rmaxi);
+			res->maxi = max(res1->rmaxi + res2.lmaxi, max(res1->maxi, res2.maxi));
 
-		psum = res->sum, pmaxi = res->maxi, plmaxi = res->lmaxi, prmaxi = res->rmaxi;
+			psum = res->sum, pmaxi = res->maxi, plmaxi = res->lmaxi, prmaxi = res->rmaxi;
 
-		res->sum = psum + res3->sum;
-		res->lmaxi = max(plmaxi, psum + res3->lmaxi);
-		res->rmaxi = max(res3->rmaxi, res3->sum + prmaxi);
-		res->maxi = max(prmaxi + res3->lmaxi, max(pmaxi, res3->maxi));
+			res->sum = psum + res3->sum;
+			res->lmaxi = max(plmaxi, psum + res3->lmaxi);
+			res->rmaxi = max(res3->rmaxi, res3->sum + prmaxi);
+			res->maxi = max(prmaxi + res3->lmaxi, max(pmaxi, res3->maxi));
+			cout << "maxsub sum is " << res->maxi << " in index file" << endl;
+			cout << "I/O number is " << ionum << endl;
+		}
+		else
+		{
+			DiskNode *res = new DiskNode();
+			int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
+			res->sum = res1->sum + res3->sum;
+			res->lmaxi = max(res1->lmaxi, res1->sum + res3->lmaxi);
+			res->rmaxi = max(res3->rmaxi, res3->sum + res1->rmaxi);
+			res->maxi = max(res1->rmaxi + res3->lmaxi, max(res1->maxi, res3->maxi));
+			cout << "maxsub sum is " << res->maxi << " in index file" << endl;
+			cout << "I/O number is " << ionum << endl;
+		}
+		
 
-		cout << "maxsub sum is " << res->maxi << " in index file" << endl;
-		cout << "I/O number is " << ionum << endl;
+		
 	}
 	
 	
