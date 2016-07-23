@@ -19,17 +19,18 @@
 #include <sstream>
 using namespace std;
 
+typedef __int64 mytype;
 const int kBranchNum = 5;                       //const branch number
 fstream file;
-
+int ionum = 0;
 typedef struct Info{
-	int maxi, lmaxi, rmaxi, sum;
+	mytype maxi, lmaxi, rmaxi, sum;
 };
 typedef struct Node{                             //Node structure
     int l;
     int r;
     int branch;
-    int maxi,lmaxi,rmaxi,sum;
+	mytype maxi, lmaxi, rmaxi, sum;
     int p[kBranchNum + 1];
     struct Node *s[kBranchNum + 1];
 	Info info[kBranchNum][kBranchNum];
@@ -37,7 +38,7 @@ typedef struct Node{                             //Node structure
 } Node; 
 
 typedef struct AllFileNode{                             //Node structure
-	int maxi, lmaxi, rmaxi, sum;
+	mytype maxi, lmaxi, rmaxi, sum;
 	struct AllFileNode *s[11];
 	Info info[11][11];
 } allnode;
@@ -46,7 +47,7 @@ typedef struct DiskNode{                             //Node structure
 	int l;
 	int r;
 	int branch;
-	int maxi, lmaxi, rmaxi, sum;
+	mytype maxi, lmaxi, rmaxi, sum;
 	int p[kBranchNum + 1];
 	Info info[kBranchNum][kBranchNum];
 } DiskNode;
@@ -114,7 +115,7 @@ void GetData(string filename,int start, int end)
 }
 
 //return max value
-int max(int a, int b)
+mytype max(mytype a, mytype b)
 {
     return a>b?a:b;
 }
@@ -219,7 +220,6 @@ void CreateTree(int l ,int r , Node *tp, int x[])
         tp->r = rr;
         tp->maxi = tp->lmaxi = tp->rmaxi = tp->sum = x[ll];
 		tp->branch = 0;
-		//free(tp);
         return;
     }
     
@@ -397,10 +397,10 @@ DiskNode *MergeBranchInQDisk(DiskNode *p, Info *k, DiskNode *q, int n)
 
 }
 
-int ionum = 0;
+
 //calculate pointer number
 DiskNode *p = new DiskNode;
-int IntervalNumInDisk(int x, DiskNode *tp)
+int IntervalNumInDisk(mytype x, DiskNode *tp)
 {
 	
 	int m = 0;
@@ -413,7 +413,7 @@ int IntervalNumInDisk(int x, DiskNode *tp)
 	return m;
 }
 
-int IntervalNumInDisk2(int x, DiskNode *tp)
+int IntervalNumInDisk2(mytype x, DiskNode *tp)
 {
 
 	int m = 0;
@@ -670,7 +670,8 @@ void WriteIndexFile(Node* root)
     cur = 0;
     last = 1;
     p =root;
-	DiskNode *disknode = new DiskNode;
+	int i = 0;
+	DiskNode *disknode = new DiskNode();
     while (cur<vec.size())
     {
         last=int(vec.size());
@@ -687,14 +688,14 @@ void WriteIndexFile(Node* root)
 			disknode->branch = vec[cur]->branch;
 			disknode->maxi = vec[cur]->maxi;
 			disknode->lmaxi = vec[cur]->lmaxi;
-			disknode->rmaxi= vec[cur]->rmaxi;
+			disknode->rmaxi = vec[cur]->rmaxi;
 			disknode->sum = vec[cur]->sum;
 			
 			memcpy(disknode->p, vec[cur]->p, sizeof(int)*(kBranchNum + 1));
 			memcpy(disknode->info, vec[cur]->info, sizeof(Info)*(kBranchNum * kBranchNum));
-			//file.write((char*)vec[cur], sizeof(Node));
 			file.write((char*)disknode, sizeof(DiskNode));
 			file.seekp(0, ios::end);
+			
             cur++;
             
         }
@@ -738,7 +739,7 @@ void WriteNodeIndex()
 		string indexname = "";
 		stringstream convert;
 		convert << i;
-		indexname ="index\\" + convert.str() + ".dat";
+		indexname ="index2\\" + convert.str() + ".dat";
 		file.open(indexname, ios::in | ios::binary);           //open index file
 		file.read((char*)p, sizeof(DiskNode));
 
@@ -784,9 +785,11 @@ void ReadNode()
 	file.close();
 }
 
+clock_t start_time, end_time;
 int main(int argc, const char * argv[]) {
-	//WriteNodeIndex();
-	//ReadNode();
+	int sss = sizeof(DiskNode);
+	WriteNodeIndex();
+
 	int a = 1;                                              //a to b index
 	int b = g_data_line;
 	//GetData("1000w.txt", 9000001, 10000000);
@@ -797,35 +800,69 @@ int main(int argc, const char * argv[]) {
 	//AddInfo(rootnode);
 	//WriteIndexFile(rootnode);                             //write index to disk
 	///////ReadNode();
+
+	//file.open("test.dat", ios::in | ios::binary);           //open index file
+	//DiskNode *res1 = QuerySegInDisk(1, 1000000, 1234, 876543, rootdisknode, 0);//query from aa to bb 's max segment sum
+	//file.close();
 	
 	while (1)
 	{
+		printf("Please input range: \n");
 		cin >> left >> right;
+		start_time = clock();
 		//Node *res1 = QuerySeg(a, b, left, right, rootnode, 0);
 		//cout << "maxsub sum is " << res1->maxi << " in memory" << endl;
 		int l1 = left / 1000000;
 		int l2 = left % 1000000;
 		int r1 = right / 1000000;
 		int r2 = right % 1000000;
-
+		if (r2 == 0) r1 = r2;
+		int res1right = 0;
+		if (r1 == 0) res1right = right;
+		else res1right = 1000000;
 		stringstream convert;
 		convert << l1 + 1;
-		string filename = "index\\" + convert.str() + ".dat";
+		string filename = "index2\\" + convert.str() + ".dat";
 
+		DiskNode *res1 = new DiskNode();
+		DiskNode *res2 = new DiskNode();
+		DiskNode *res3 = new DiskNode();
 		file.open(filename, ios::in | ios::binary);           //open index file
-		DiskNode *res1 = QuerySegInDisk(a, b, l2, 1000000, rootdisknode, 0);//query from aa to bb 's max segment sum
+		res1 = QuerySegInDisk(a, b, l2, res1right, rootdisknode, 0);//query from aa to bb 's max segment sum
 		file.close();
 		filename.clear();
-		
-		stringstream convert2;
-		convert2 << r1 + 1;
-		filename = "index\\" + convert2.str() + ".dat";
-		file.open(filename, ios::in | ios::binary);           //open index file
-		DiskNode *res3 = QuerySegInDisk(a, b, 1, r2, rootdisknode, 0);//query from aa to bb 's max segment sum
-		file.close();
 
-		if ((r1 - l1) >= 2)
+		if ((r1 - l1) < 1)
 		{
+			cout << "maxsub sum is " << res1->maxi << " in index file" << endl;
+			cout << "I/O number is " << ionum << endl;
+		}
+		else if ((r1 - l1) == 1)
+		{
+			stringstream convert2;
+			convert2 << r1 + 1;
+			filename = "index2\\" + convert2.str() + ".dat";
+			file.open(filename, ios::in | ios::binary);           //open index file
+			res3 = QuerySegInDisk(a, b, 1, r2, rootdisknode, 0);//query from aa to bb 's max segment sum
+			file.close();
+
+			DiskNode *res = new DiskNode();
+			res->sum = res1->sum + res3->sum;
+			res->lmaxi = max(res1->lmaxi, res1->sum + res3->lmaxi);
+			res->rmaxi = max(res3->rmaxi, res3->sum + res1->rmaxi);
+			res->maxi = max(res1->rmaxi + res3->lmaxi, max(res1->maxi, res3->maxi));
+			cout << "maxsub sum is " << res->maxi << " in index file" << endl;
+			cout << "I/O number is " << ionum << endl;
+		}
+		else if ((r1 - l1) > 1)
+		{
+			stringstream convert2;
+			convert2 << r1 + 1;
+			filename = "index2\\" + convert2.str() + ".dat";
+			file.open(filename, ios::in | ios::binary);           //open index file
+			res3 = QuerySegInDisk(a, b, 1, r2, rootdisknode, 0);//query from aa to bb 's max segment sum
+			file.close();
+
 			fstream file2;
 			file2.open("NodeIndex.dat", ios::in | ios::binary);
 			AllFileNode *s = new AllFileNode;
@@ -834,7 +871,7 @@ int main(int argc, const char * argv[]) {
 			Info res2 = s->info[l1 + 2][r1];
 
 			DiskNode *res = new DiskNode();
-			int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
+		    mytype psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
 			res->sum = res1->sum + res2.sum;
 			res->lmaxi = max(res1->lmaxi, res1->sum + res2.lmaxi);
 			res->rmaxi = max(res2.rmaxi, res2.sum + res1->rmaxi);
@@ -848,21 +885,10 @@ int main(int argc, const char * argv[]) {
 			res->maxi = max(prmaxi + res3->lmaxi, max(pmaxi, res3->maxi));
 			cout << "maxsub sum is " << res->maxi << " in index file" << endl;
 			cout << "I/O number is " << ionum << endl;
-		}
-		else
-		{
-			DiskNode *res = new DiskNode();
-			int psum = 0, pmaxi = 0, plmaxi = 0, prmaxi = 0;
-			res->sum = res1->sum + res3->sum;
-			res->lmaxi = max(res1->lmaxi, res1->sum + res3->lmaxi);
-			res->rmaxi = max(res3->rmaxi, res3->sum + res1->rmaxi);
-			res->maxi = max(res1->rmaxi + res3->lmaxi, max(res1->maxi, res3->maxi));
-			cout << "maxsub sum is " << res->maxi << " in index file" << endl;
-			cout << "I/O number is " << ionum << endl;
-		}
-		
-
-		
+		}	
+		end_time = clock();
+		double duration_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+		cout << "duration :" << duration_time << endl;
 	}
 	
 	
